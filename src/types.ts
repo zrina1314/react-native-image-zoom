@@ -1,240 +1,285 @@
 import { ForwardedRef } from 'react';
 import type {
-  ImageProps,
-  ImageSourcePropType,
-  LayoutRectangle,
-  ViewProps,
+  ImageProps,             // 图片组件属性
+  ImageSourcePropType,   // 图片源类型
+  LayoutRectangle,       // 布局矩形信息
+  ViewProps,             // 视图组件属性
 } from 'react-native';
 import type {
-  GestureStateChangeEvent,
-  PanGestureHandlerEventPayload,
-  PinchGestureHandlerEventPayload,
-  TapGestureHandlerEventPayload,
-} from 'react-native-gesture-handler';
+  GestureStateChangeEvent,        // 手势状态变化事件
+  PanGestureHandlerEventPayload,  // 拖拽手势事件数据
+  PinchGestureHandlerEventPayload, // 捏合手势事件数据
+  TapGestureHandlerEventPayload,  // 点击手势事件数据
+} from 'react-native-gesture-handler';  // 手势处理库类型
 import {
-  AnimatableValue,
-  AnimateProps,
-  SharedValue,
-} from 'react-native-reanimated';
+  AnimatableValue,       // 可动画化值类型
+  AnimateProps,          // 动画属性
+  SharedValue,           // 共享值类型
+} from 'react-native-reanimated';  // Reanimated动画库类型
 
+
+
+/////////////////定义各种手势回调类型//////////////////////
+/**
+ * 捏合开始回调
+ * @description
+ *
+ */
 export type OnPinchStartCallback = (
   event: GestureStateChangeEvent<PinchGestureHandlerEventPayload>
 ) => void;
 
+/** 捏合结束回调 */
 export type OnPinchEndCallback = (
   event: GestureStateChangeEvent<PinchGestureHandlerEventPayload>,
+  /** 手势是否成功完成 */
   success: boolean
 ) => void;
 
+/** 拖拽开始回调 */
 export type OnPanStartCallback = (
   event: GestureStateChangeEvent<PanGestureHandlerEventPayload>
 ) => void;
 
+/** 拖拽结束回调 */
 export type OnPanEndCallback = (
   event: GestureStateChangeEvent<PanGestureHandlerEventPayload>,
+  /** 拖拽是否成功 */
   success: boolean
 ) => void;
 
+/** 单击回调 */
 export type OnSingleTapCallback = (
   event: GestureStateChangeEvent<TapGestureHandlerEventPayload>
 ) => void;
 
+// 缩放类型枚举
 export enum ZOOM_TYPE {
+  /** 放大操作 */
   ZOOM_IN = 'ZOOM_IN',
+  /** 缩小操作 */
   ZOOM_OUT = 'ZOOM_OUT',
 }
 
+// 程序化缩放回调类型
 export type ProgrammaticZoomCallback = (event: {
+  /** 目标缩放值 */
   scale: number;
+  /** X坐标焦点 */
   x: number;
+  /** Y坐标焦点 */
   y: number;
 }) => void;
 
+// 双击和程序化缩放回调别名
 export type OnDoubleTapCallback = (zoomType: ZOOM_TYPE) => void;
 export type OnProgrammaticZoomCallback = (zoomType: ZOOM_TYPE) => void;
 
+// 获取组件信息回调类型
 export type GetInfoCallback = () => {
+  /** 容器信息 */
   container: {
+    /** 容器宽度 */
     width: number;
+    /** 容器高度 */
     height: number;
+    /** 中心点坐标 */
     center: { x: number; y: number };
   };
+  /** 缩放后尺寸 */
   scaledSize: {
     width: number;
     height: number;
   };
+  /** 可视区域 */
   visibleArea: {
+    /** X起始位置 */
     x: number;
+    /** Y起始位置 */
     y: number;
+    /** 可视宽度 */
     width: number;
+    /** 可视高度 */
     height: number;
   };
+  /** 当前变换值 */
   transformations: {
+    /** X轴平移 */
     translateX: number;
+    /** Y轴平移 */
     translateY: number;
+    /** 缩放比例 */
     scale: number;
   };
 };
 
+/** 动画值类型枚举 */
 export enum ANIMATION_VALUE {
+  /** 缩放动画 */
   SCALE = 'SCALE',
+  /** X焦点动画 */
   FOCAL_X = 'FOCAL_X',
+  /** Y焦点动画 */
   FOCAL_Y = 'FOCAL_Y',
+  /** X平移动画 */
   TRANSLATE_X = 'TRANSLATE_X',
+  /** Y平移动画 */
   TRANSLATE_Y = 'TRANSLATE_Y',
 }
 
+/** 重置动画结束回调类型 */
 export type OnResetAnimationEndCallback = (
+  /** 是否全部完成 */
   finished?: boolean,
+  /** 各动画值状态 */
   values?: Record<
     ANIMATION_VALUE,
     {
+      /** 最后值 */
       lastValue: number;
+      /** 是否完成 */
       finished?: boolean;
+      /** 当前值 */
       current?: AnimatableValue;
     }
   >
 ) => void;
 
+/** 缩放组件属性类型 */
 export type ZoomProps = {
   /**
-   * The minimum scale allowed for zooming.
+   * 允许的最小缩放比例
    * @default 1
    */
   minScale?: number;
   /**
-   * The maximum scale allowed for zooming.
+   * 允许的最大缩放比例
    * @default 5
    */
   maxScale?: number;
   /**
-   * The `scale` property allows you to provide your own Reanimated shared value for scale.
-   * This shared value will be updated as the zoom level changes, enabling you to use the
-   * current scale in your own code.
+   * 自定义缩放共享值（用于外部控制）
    * @default useSharedValue(1)
    */
   scale?: SharedValue<number>;
   /**
-   * The value of the scale when a double-tap gesture is detected.
+   * 双击缩放比例
    * @default 3
    */
   doubleTapScale?: number;
   /**
-   * The maximum number of pointers required to enable panning.
+   * 最大拖拽触点数
    * @default 2
    */
   maxPanPointers?: number;
   /**
-   * Determines whether panning is enabled within the range of the minimum and maximum pan pointers.
+   * 是否启用拖拽
    * @default true
    */
   isPanEnabled?: boolean;
   /**
-   * Determines whether pinching is enabled.
+   * 是否启用捏合缩放
    * @default true
    */
   isPinchEnabled?: boolean;
   /**
-   * Enables or disables the single tap feature.
+   * 是否启用单击事件
    * @default false
    */
   isSingleTapEnabled?: boolean;
   /**
-   * Enables or disables the double tap feature.
-   * When enabled, this feature prevents automatic reset of the zoom to its initial position, allowing continuous zooming.
-   * To return to the initial position, double tap again or zoom out to a scale level less than 1.
+   * 是否启用双击缩放
    * @default false
    */
   isDoubleTapEnabled?: boolean;
   /**
-   * A callback triggered when the interaction starts.
+   * 交互开始回调
    */
   onInteractionStart?: () => void;
   /**
-   * A callback triggered when the interaction ends.
+   * 交互结束回调
    */
   onInteractionEnd?: () => void;
   /**
-   * A callback triggered when the pinching starts.
+   * 捏合开始回调
    */
   onPinchStart?: OnPinchStartCallback;
   /**
-   * A callback triggered when the pinching ends.
+   * 捏合结束回调
    */
   onPinchEnd?: OnPinchEndCallback;
   /**
-   * A callback triggered when the panning starts.
+   * 拖拽开始回调
    */
   onPanStart?: OnPanStartCallback;
   /**
-   * A callback triggered when the panning ends.
+   * 拖拽结束回调
    */
   onPanEnd?: OnPanEndCallback;
   /**
-   * A callback triggered when a single tap is detected.
+   * 单击回调
    */
   onSingleTap?: OnSingleTapCallback;
   /**
-   * A callback triggered when a double tap gesture is detected.
+   * 双击回调
    */
   onDoubleTap?: OnDoubleTapCallback;
   /**
-   * A callback function that is invoked when a programmatic zoom event occurs.
+   * 程序化缩放回调
    */
   onProgrammaticZoom?: OnProgrammaticZoomCallback;
   /**
-   * A callback triggered upon the completion of the reset animation. It accepts two parameters: finished and values.
-   * The finished parameter evaluates to true if all animation values have successfully completed the reset animation;
-   * otherwise, it is false, indicating interruption by another gesture or unforeseen circumstances.
-   * The values parameter provides additional detailed information for each animation value.
+   * 重置动画结束回调
+   * @param finished 是否全部动画完成
+   * @param values 各动画值状态
    */
   onResetAnimationEnd?: OnResetAnimationEndCallback;
 };
 
+/** 组合动画属性和视图属性 */
 export type ZoomableProps = AnimateProps<ViewProps> & ZoomProps;
 
+/** 自定义Hook属性类型 */
 export type UseZoomableProps = ZoomProps & {
+  /** 组件引用转发 */
   ref: ForwardedRef<ZoomableRef>;
   /**
-   * Invoked on mount and layout changes with
-   *
-   * {nativeEvent: { layout: {x, y, width, height}}}.
+   * 布局变化回调
    */
   onLayout?: ZoomableProps['onLayout'];
 };
 
+/** 图片缩放组件属性（继承视图属性） */
 export type ImageZoomProps = Omit<AnimateProps<ImageProps>, 'source'> &
   ZoomProps & {
     /**
-     * The image's URI, which can be overridden by the `source` prop.
+     * 图片URI（优先于source）
      * @default ''
      */
     uri?: string;
     /**
-     * @see https://facebook.github.io/react-native/docs/image.html#source
-     * @default undefined
+     * 标准图片源属性
      */
     source?: ImageSourcePropType;
   };
 
+/** 布局Hook属性 */
 export type ZoomableUseLayoutProps = Pick<ZoomableProps, 'onLayout'>;
 
+/** 布局状态类型（扩展布局矩形） */
 export type ZoomableLayoutState = LayoutRectangle & {
   /**
-   * An object containing the x and y coordinates of the center point of the view, relative to the top-left corner of the container.
+   * 容器中心点坐标
    */
   center: {
-    /**
-     * The x-coordinate of the center point of the view.
-     */
+    /** X轴中心点 */
     x: number;
-    /**
-     * The y-coordinate of the center point of the view.
-     */
+    /** Y轴中心点 */
     y: number;
   };
 };
 
+/** 手势Hook属性（组合布局状态和缩放属性） */
 export type ZoomableUseGesturesProps = Pick<
   ZoomableLayoutState,
   'width' | 'height' | 'center'
@@ -262,38 +307,21 @@ export type ZoomableUseGesturesProps = Pick<
     | 'onResetAnimationEnd'
   >;
 
+/** 组件引用暴露方法 */
 export type ZoomableRef = {
   /**
-   * Resets the zoom level to its original scale.
+   * 重置缩放状态
    */
   reset: () => void;
   /**
-   * Triggers a zoom event to the specified coordinates (x, y) at the defined scale level.
+   * 程序化缩放控制
    */
   zoom: ProgrammaticZoomCallback;
   /**
-   * Retrieves detailed information about the zoomable component, including container dimensions,
-   * scaled size, visible area (relative to the scaled component), and transformation values.
-   *
-   * @returns An object containing:
-   * - `container`: The original container's dimensions and center point.
-   *   - `width`: The width of the container.
-   *   - `height`: The height of the container.
-   *   - `center`: The center coordinates of the container.
-   * - `scaledSize`: The dimensions of the component after applying the current scale.
-   *   - `width`: The scaled width.
-   *   - `height`: The scaled height.
-   * - `visibleArea`: The visible region of the scaled component.
-   *   - `x`: The x-coordinate of the top-left corner of the visible area (relative to the scaled component).
-   *   - `y`: The y-coordinate of the top-left corner of the visible area (relative to the scaled component).
-   *   - `width`: The width of the visible area (matches container width).
-   *   - `height`: The height of the visible area (matches container height).
-   * - `transformations`: The current transformation values.
-   *   - `translateX`: The horizontal translation value (including focal point adjustment).
-   *   - `translateY`: The vertical translation value (including focal point adjustment).
-   *   - `scale`: The current scale factor.
+   * 获取组件当前状态信息
    */
   getInfo: GetInfoCallback;
 };
 
+/** 图片缩放组件引用别名 */
 export type ImageZoomRef = ZoomableRef;
